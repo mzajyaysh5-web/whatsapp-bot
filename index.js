@@ -13,12 +13,12 @@ async function startBot() {
         const { connection, qr, lastDisconnect } = update
 
         if (qr) {
-            console.log("📱 امسح QR من واتساب:")
+            console.log("📱 QR CODE:")
             console.log(qr)
         }
 
         if (connection === "open") {
-            console.log("✅ البوت اشتغل بنجاح")
+            console.log("✅ البوت اشتغل")
         }
 
         if (connection === "close") {
@@ -27,6 +27,21 @@ async function startBot() {
             if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
                 startBot()
             }
+        }
+    })
+
+    sock.ev.on("messages.upsert", async ({ messages }) => {
+        const msg = messages[0]
+        if (!msg.message) return
+
+        const from = msg.key.remoteJid
+        const text =
+            msg.message.conversation ||
+            msg.message.extendedTextMessage?.text ||
+            ""
+
+        if (text === "!بنج") {
+            await sock.sendMessage(from, { text: "🏓 شغال" })
         }
     })
 }
