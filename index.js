@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys")
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys")
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState("session")
@@ -10,21 +10,27 @@ async function startBot() {
 
     sock.ev.on("creds.update", saveCreds)
 
-    // 🟢 مهم جدًا: هذا لحل الاتصال + QR
     sock.ev.on("connection.update", (update) => {
-        const { connection, qr } = update
+        const { connection, qr, lastDisconnect } = update
 
         if (qr) {
-            console.log("📱 امسح QR من هنا:")
+            console.log("📱 امسح هذا QR من واتساب:")
             console.log(qr)
         }
 
         if (connection === "open") {
-            console.log("✅ البوت اشتغل بنجاح")
+            console.log("✅ تم الاتصال بنجاح")
         }
 
         if (connection === "close") {
-            console.log("❌ تم قطع الاتصال - يعاد التشغيل")
+            const reason = lastDisconnect?.error?.output?.statusCode
+
+            console.log("❌ انقطع الاتصال:", reason)
+
+            // 🔁 إعادة تشغيل تلقائي
+            if (reason !== DisconnectReason.loggedOut) {
+                startBot()
+            }
         }
     })
 
@@ -39,11 +45,11 @@ async function startBot() {
             ""
 
         if (text === "!بنج") {
-            await sock.sendMessage(from, { text: "🏓 شغال" })
+            await sock.sendMessage(from, { text: "🏓 البوت شغال" })
         }
     })
 }
 
 startBot()
 
-console.log("🚀 البوت قيد التشغيل...")
+console.log("🚀 البوت بدأ التشغيل...")
